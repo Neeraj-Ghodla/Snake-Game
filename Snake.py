@@ -38,21 +38,27 @@ class Snake:
         # moves.  That is, every 10 moves, the tail of the snake is not
         # removed.
 
-        #adding new locations
-
         if self.move_counter < 10:
             self.move_counter += 1
 
+        # print(self.move_counter)
+
+        # adding new locations
         if self.move_counter == 10:
             self.move_counter = 0
             self.locations.append(self.locations[len(self.locations) - 1])
 
-        #updating locations
+        # updating locations
         if len(self.locations) > 1:
-            for i in range(len(self.locations) - 2, 0, -1):
-                self.update_location(self.locations[i][0], self.locations[i][1], i + 1)
+            for i in range(len(self.locations) - 1, 0, -1):
+                self.update_location(
+                    self.locations[i - 1][0], self.locations[i - 1][1], i)
 
-        #moving the snake
+        # for i in range(1, len(self.locations)):
+        #     self.update_location(self.locations[i][0].reverse, self.locations[i][1].reverse, i - 1)
+
+
+        # moving the snake
         if direction == "right":
             self.locations[0][0] = self.locations[0][0] + self.size
         elif direction == "left":
@@ -63,13 +69,42 @@ class Snake:
             self.locations[0][1] = self.locations[0][1] - self.size
 
 
+        # print(self.locations)
+
+
     def hit_self(self):
         # check if the head of the snake has hit one of its own segments
-        pass
+        hit_counter = 0
+        for i in range(1, len(self.locations)):
+            if (self.locations[0][0] != self.locations[i][0] and
+                # self.locations[0][0] != self.locations[i][0] + self.size and
+                self.locations[0][1] != self.locations[i][1]):
+                # self.locations[0][1] != self.locations[i][1] + self.size):
+                # print("len: ", len(self.locations), end = " ")
+                # print("hits: ", hit_counter)
+                # print('safe')
+                pass
+                # print(self.locations)
+            else:
+                hit_counter += 1
+
+        print(self.locations)
+
+        return hit_counter > 1
+
+        # pass
 
     def hit_bounds(self, bounds):  # left, top, right, bottom bounding box
         # check if the snake has hit the bounds given
-        if self.home[0] <= 280 and self.home[1] <= 280 and self.home[0] > -280 and self.home[1] > -280:
+        left = bounds['left']
+        top = bounds['top']
+
+        limit = bounds['top'] * self.size
+
+        if (self.locations[0][0] <= limit - self.size + 5 and
+            self.locations[0][1] <= limit - self.size + 5 and
+            self.locations[0][0] >= -limit + self.size and
+            self.locations[0][1] >= -limit + self.size):
             return False
         else:
             return True
