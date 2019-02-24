@@ -1,5 +1,8 @@
 import turtle
+# from random import randint
+import random
 
+hit_target = False
 
 class Snake:
     # The snake moves by jumping one square at a time.
@@ -29,6 +32,10 @@ class Snake:
     def draw(self):
         # Draws each of the segments, and then draws the head with red colour
         for i in range(len(self.locations)):
+            if i == 0:
+                turtle.color("red")
+            else:
+                turtle.color("black")
             self.draw_segment([self.locations[i][0], self.locations[i][1]])
 
     def move(self, direction):
@@ -45,6 +52,7 @@ class Snake:
 
         # adding new locations
         if self.move_counter == 10:
+        # if hit_target:
             self.move_counter = 0
             self.locations.append(self.locations[len(self.locations) - 1])
 
@@ -74,36 +82,24 @@ class Snake:
 
     def hit_self(self):
         # check if the head of the snake has hit one of its own segments
-        hit_counter = 0
+        is_hit = False
         for i in range(1, len(self.locations)):
-            if (self.locations[0][0] != self.locations[i][0] and
-                # self.locations[0][0] != self.locations[i][0] + self.size and
-                self.locations[0][1] != self.locations[i][1]):
-                # self.locations[0][1] != self.locations[i][1] + self.size):
-                # print("len: ", len(self.locations), end = " ")
-                # print("hits: ", hit_counter)
-                # print('safe')
-                pass
-                # print(self.locations)
-            else:
-                hit_counter += 1
-
-        print(self.locations)
-
-        return hit_counter > 1
+            if (self.locations[0][0] == self.locations[i][0] and
+                self.locations[0][1] == self.locations[i][1]):
+                is_hit = True
+                return is_hit
+        return is_hit
 
         # pass
 
     def hit_bounds(self, bounds):  # left, top, right, bottom bounding box
         # check if the snake has hit the bounds given
-        left = bounds['left']
-        top = bounds['top']
 
         limit = bounds['top'] * self.size
 
-        if (self.locations[0][0] <= limit - self.size + 5 and
-            self.locations[0][1] <= limit - self.size + 5 and
-            self.locations[0][0] >= -limit + self.size and
+        if (self.locations[0][0] <= limit - self.size and
+            self.locations[0][1] <= limit - 2 * self.size and
+            self.locations[0][0] >= -limit + 2 * self.size and
             self.locations[0][1] >= -limit + self.size):
             return False
         else:
@@ -111,6 +107,64 @@ class Snake:
 
     def update_location(self, row, col, index):
         self.locations[index] = [row, col]
+
+    def draw_target(self, target_row, target_col):
+        pass
+        
+
+# class Target:
+#     def __init__(self, locations, bounds, snake_size):
+#         self.locations = locations
+#         self.bounds = bounds
+#         self.size = snake_size
+#         self.row = 0
+#         self.col = 0
+#         self.loc = []
+
+#     def place_target(self):
+#         # limit = self.bounds['top'] * self.size
+#         # self.row = randint(-280, 300)
+#         # self.col = randint(-280, 300)
+
+#         # for i in range(len(self.locations)):
+#         #     if self.row == self.locations[i][0] and self.col == self.locations[i][1]:
+#         #         self.row = randint(-280, 300)
+#         #         self.col = randint(-280, 300)
+
+#         self.row = random.randint(-13, 14) * 20
+#         self.col = random.randint(-13, 14) * 20
+
+        
+
+#         return [self.row, self.col]
+
+#     def draw(self):
+#         if len(self.loc) == 0:
+#             self.loc = self.place_target()
+#             if self.row == self.locations[0][0] and self.col == self.locations[0][0]:
+#                 print('Hit')
+#                 hit_target = True
+
+#         print("row: ", self.row)
+#         print("col: ", self.col)
+#         print(self.locations[0])
+
+#         turtle.color("green")
+#         turtle.goto(self.loc[0], self.loc[1])
+#         turtle.pendown()
+#         turtle.begin_fill()
+#         turtle.goto(self.loc[0] - self.size, self.loc[1])
+#         turtle.goto(self.loc[0] - self.size, self.loc[1] + self.size)
+#         turtle.goto(self.loc[0], self.loc[1] + self.size)
+#         turtle.goto(self.loc[0], self.loc[1])
+#         turtle.end_fill()
+#         turtle.penup()
+
+
+    # def hit_target(self):
+    #     if self.row == self.locations[0][0] and self.col == self.locations[0][0]:
+    #         print('Hit')
+    #         hit_target = True
 
 
 class SnakeGame:
@@ -146,8 +200,9 @@ class SnakeGame:
         self.snake_size = 20
         self.boundary_limit = {'left': -15,
                                'right': 15, 'top': 15, 'bottom': -15}
-        snake_home = [0, 0]
+        snake_home = (0, 0)
         self.snake = Snake(snake_home, self.snake_size)
+        # self.target = Target(self.snake.locations, self.boundary_limit, self.snake_size)
         self.framework.start_game()
 
     def draw_bounds(self):
@@ -176,9 +231,10 @@ class SnakeGame:
             self.snake.move('left')
         self.draw_bounds()
         self.snake.draw()
+        # self.target.draw()
         if self.snake.hit_self() or self.snake.hit_bounds(self.boundary_limit):
-            self.framework.stop_game()
-            print(self.snake.locations)  # game over
+            self.framework.stop_game() # game over
+            print(self.snake.locations)       
             print("game over")
 
     def start(self):
