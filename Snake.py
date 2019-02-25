@@ -2,8 +2,6 @@ import turtle
 # from random import randint
 import random
 
-hit_target = False
-
 class Snake:
     # The snake moves by jumping one square at a time.
     def __init__(self, home, size):
@@ -45,8 +43,8 @@ class Snake:
         # moves.  That is, every 10 moves, the tail of the snake is not
         # removed.
 
-        if self.move_counter < 10:
-            self.move_counter += 1
+        # if self.move_counter < 10:
+        #     self.move_counter += 1
 
         # print(self.move_counter)
 
@@ -112,59 +110,44 @@ class Snake:
         pass
         
 
-# class Target:
-#     def __init__(self, locations, bounds, snake_size):
-#         self.locations = locations
-#         self.bounds = bounds
-#         self.size = snake_size
-#         self.row = 0
-#         self.col = 0
-#         self.loc = []
+class Target:
+    def __init__(self, bounds, snake_size):
+        self.bounds = bounds
+        self.size = snake_size
+        self.pos = [0,0]
 
-#     def place_target(self):
-#         # limit = self.bounds['top'] * self.size
-#         # self.row = randint(-280, 300)
-#         # self.col = randint(-280, 300)
+    def get_pos(self):
+        # limit = self.bounds['top'] * self.size
+        # self.row = randint(-280, 300)
+        # self.col = randint(-280, 300)
 
-#         # for i in range(len(self.locations)):
-#         #     if self.row == self.locations[i][0] and self.col == self.locations[i][1]:
-#         #         self.row = randint(-280, 300)
-#         #         self.col = randint(-280, 300)
+        # for i in range(len(self.locations)):
+        #     if self.row == self.locations[i][0] and self.col == self.locations[i][1]:
+        #         self.row = randint(-280, 300)
+        #         self.col = randint(-280, 300)
 
-#         self.row = random.randint(-13, 14) * 20
-#         self.col = random.randint(-13, 14) * 20
+        self.pos[0] = random.randint(-13, 14) * 20
+        self.pos[1] = random.randint(-13, 14) * 20
 
         
+        # self.loc = [row, col]
+        # return [row, col]
 
-#         return [self.row, self.col]
+    def draw(self):
+        if self.pos == [0,0]:
+            self.get_pos()
+            # print(self.pos[0])
 
-#     def draw(self):
-#         if len(self.loc) == 0:
-#             self.loc = self.place_target()
-#             if self.row == self.locations[0][0] and self.col == self.locations[0][0]:
-#                 print('Hit')
-#                 hit_target = True
-
-#         print("row: ", self.row)
-#         print("col: ", self.col)
-#         print(self.locations[0])
-
-#         turtle.color("green")
-#         turtle.goto(self.loc[0], self.loc[1])
-#         turtle.pendown()
-#         turtle.begin_fill()
-#         turtle.goto(self.loc[0] - self.size, self.loc[1])
-#         turtle.goto(self.loc[0] - self.size, self.loc[1] + self.size)
-#         turtle.goto(self.loc[0], self.loc[1] + self.size)
-#         turtle.goto(self.loc[0], self.loc[1])
-#         turtle.end_fill()
-#         turtle.penup()
-
-
-    # def hit_target(self):
-    #     if self.row == self.locations[0][0] and self.col == self.locations[0][0]:
-    #         print('Hit')
-    #         hit_target = True
+        turtle.color("green")
+        turtle.goto(self.pos[0], self.pos[1])
+        turtle.pendown()
+        turtle.begin_fill()
+        turtle.goto(self.pos[0] - self.size, self.pos[1])
+        turtle.goto(self.pos[0] - self.size, self.pos[1] + self.size)
+        turtle.goto(self.pos[0], self.pos[1] + self.size)
+        turtle.goto(self.pos[0], self.pos[1])
+        turtle.end_fill()
+        turtle.penup()
 
 
 class SnakeGame:
@@ -202,7 +185,7 @@ class SnakeGame:
                                'right': 15, 'top': 15, 'bottom': -15}
         snake_home = (0, 0)
         self.snake = Snake(snake_home, self.snake_size)
-        # self.target = Target(self.snake.locations, self.boundary_limit, self.snake_size)
+        self.target = Target(self.boundary_limit, self.snake_size)
         self.framework.start_game()
 
     def draw_bounds(self):
@@ -229,9 +212,15 @@ class SnakeGame:
             self.snake.move('down')
         if self.last_key == 'Left':
             self.snake.move('left')
+
         self.draw_bounds()
         self.snake.draw()
-        # self.target.draw()
+        self.target.draw()
+
+        if self.target.pos == self.snake.locations[0]:
+            self.target.pos = [0, 0]
+            self.snake.move_counter = 10
+
         if self.snake.hit_self() or self.snake.hit_bounds(self.boundary_limit):
             self.framework.stop_game() # game over
             print(self.snake.locations)       
