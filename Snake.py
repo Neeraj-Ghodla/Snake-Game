@@ -1,6 +1,6 @@
 import turtle
-# from random import randint
-import random
+from random import randint
+
 
 class Snake:
     # The snake moves by jumping one square at a time.
@@ -46,11 +46,8 @@ class Snake:
         # if self.move_counter < 10:
         #     self.move_counter += 1
 
-        # print(self.move_counter)
-
         # adding new locations
         if self.move_counter == 10:
-        # if hit_target:
             self.move_counter = 0
             self.locations.append(self.locations[len(self.locations) - 1])
 
@@ -59,10 +56,6 @@ class Snake:
             for i in range(len(self.locations) - 1, 0, -1):
                 self.update_location(
                     self.locations[i - 1][0], self.locations[i - 1][1], i)
-
-        # for i in range(1, len(self.locations)):
-        #     self.update_location(self.locations[i][0].reverse, self.locations[i][1].reverse, i - 1)
-
 
         # moving the snake
         if direction == "right":
@@ -111,32 +104,26 @@ class Snake:
         
 
 class Target:
-    def __init__(self, bounds, snake_size):
+    def __init__(self, locations, bounds, snake_size):
         self.bounds = bounds
         self.size = snake_size
+        self.locations = locations
         self.pos = [0,0]
 
     def get_pos(self):
-        # limit = self.bounds['top'] * self.size
-        # self.row = randint(-280, 300)
-        # self.col = randint(-280, 300)
+        limit = self.bounds['top']
 
-        # for i in range(len(self.locations)):
-        #     if self.row == self.locations[i][0] and self.col == self.locations[i][1]:
-        #         self.row = randint(-280, 300)
-        #         self.col = randint(-280, 300)
+        self.pos[0] = randint(-limit + 2, limit - 2) * 20
+        self.pos[1] = randint(-limit + 2, limit - 2) * 20
 
-        self.pos[0] = random.randint(-13, 14) * 20
-        self.pos[1] = random.randint(-13, 14) * 20
-
-        
-        # self.loc = [row, col]
-        # return [row, col]
+        for i in range (len(self.locations)):
+            if self.pos[0] == self.locations[i][0] and self.pos[1] == self.locations[i][1]:
+                self.pos[0] = randint(-limit + 2, limit - 2) * 20
+                self.pos[1] = randint(-limit + 2, limit - 2) * 20 
 
     def draw(self):
         if self.pos == [0,0]:
             self.get_pos()
-            # print(self.pos[0])
 
         turtle.color("green")
         turtle.goto(self.pos[0], self.pos[1])
@@ -185,7 +172,7 @@ class SnakeGame:
                                'right': 15, 'top': 15, 'bottom': -15}
         snake_home = (0, 0)
         self.snake = Snake(snake_home, self.snake_size)
-        self.target = Target(self.boundary_limit, self.snake_size)
+        self.target = Target(self.snake.locations, self.boundary_limit, self.snake_size)
         self.framework.start_game()
 
     def draw_bounds(self):
