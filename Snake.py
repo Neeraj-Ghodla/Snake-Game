@@ -1,5 +1,6 @@
 import turtle
 from random import randint
+import math
 
 
 class Snake:
@@ -17,6 +18,10 @@ class Snake:
     def draw_segment(self, point):
         # Draws a square equal to the size of the snake, where the location
         # given is the bottom left corner of the square
+
+        if self.locations[0] == point:
+            turtle.color("red")
+
         turtle.goto(point[0], point[1])
         turtle.pendown()
         turtle.begin_fill()
@@ -32,8 +37,12 @@ class Snake:
         for i in range(len(self.locations)):
             if i == 0:
                 turtle.color("red")
+                # print("red")
             else:
                 turtle.color("black")
+
+            # turtle.color("red")
+
             self.draw_segment([self.locations[i][0], self.locations[i][1]])
 
     def move(self, direction):
@@ -64,7 +73,7 @@ class Snake:
             self.locations[0][0] = self.locations[0][0] - self.size
         elif direction == "up":
             self.locations[0][1] = self.locations[0][1] + self.size
-        else:
+        elif direction == "down":
             self.locations[0][1] = self.locations[0][1] - self.size
 
 
@@ -104,10 +113,11 @@ class Snake:
         
 
 class Target:
-    def __init__(self, locations, bounds, snake_size):
+    def __init__(self, locations, bounds, snake_size, enemy_locations):
         self.bounds = bounds
         self.size = snake_size
         self.locations = locations
+        self.enemy_locations = enemy_locations
         self.pos = [0,0]
 
     def get_pos(self):
@@ -117,7 +127,8 @@ class Target:
         self.pos[1] = randint(-limit + 2, limit - 2) * 20
 
         for i in range (len(self.locations)):
-            if self.pos[0] == self.locations[i][0] and self.pos[1] == self.locations[i][1]:
+            if ((self.pos[0] == self.locations[i][0] and self.pos[1] == self.locations[i][1]) or 
+                (self.pos[0] == self.enemy_locations[i][0] and self.pos[1] == self.enemy_locations[i][1])):
                 self.pos[0] = randint(-limit + 2, limit - 2) * 20
                 self.pos[1] = randint(-limit + 2, limit - 2) * 20 
 
@@ -136,6 +147,22 @@ class Target:
         turtle.end_fill()
         turtle.penup()
 
+class Enemy_Snake(Snake):
+    def __init__(self, home, size, min_dist):
+        Snake.__init__(self, home, size)
+        self.min_dist = min_dist
+
+
+    def move(self):
+        # updating locations
+        if len(self.locations) > 1:
+            for i in range(len(self.locations) - 1, 0, -1):
+                self.update_location(self.locations[i - 1][0], self.locations[i - 1][1], i)
+
+        #update head location
+        self.min_dist()
+
+
 
 class SnakeGame:
     def __init__(self):
@@ -149,7 +176,7 @@ class SnakeGame:
         # Pressing space will restart the game
         self.framework.add_key_action(self.setup_game, ' ')
         # Delay (speed) is 100.  Smaller is faster.
-        self.framework.add_tick_action(self.next_turn, 100)
+        self.framework.add_tick_action(self.next_turn, 0)
 
     # set of methods to keep track of which key was most recently pressed
     def move_right(self):
@@ -171,8 +198,10 @@ class SnakeGame:
         self.boundary_limit = {'left': -15,
                                'right': 15, 'top': 15, 'bottom': -15}
         snake_home = (0, 0)
+        enemy_snake_home = (randint(-15 + 2, 15 - 2) * 20, randint(-15 + 2, 15 - 2) * 20)
         self.snake = Snake(snake_home, self.snake_size)
-        self.target = Target(self.snake.locations, self.boundary_limit, self.snake_size)
+        self.enemy_snake = Snake(enemy_snake_home, self.snake_size)
+        self.target = Target(self.snake.locations, self.boundary_limit, self.snake_size, self.enemy_snake.locations)
         self.framework.start_game()
 
     def draw_bounds(self):
@@ -190,6 +219,9 @@ class SnakeGame:
     def next_turn(self):
         # called each time the game 'ticks'
         turtle.clear()
+
+        self.enemy_snake.move("none")
+
         # snake = self.snake
         if self.last_key == 'Right':
             self.snake.move('right')
@@ -199,19 +231,144 @@ class SnakeGame:
             self.snake.move('down')
         if self.last_key == 'Left':
             self.snake.move('left')
+        
 
         self.draw_bounds()
         self.snake.draw()
+        self.enemy_snake.draw()
         self.target.draw()
+        # print(self.snake.locations[0])
+        # print(self.enemy_snake.locations[0])
+        self.min_dist(self.target.pos[0], self.target.pos[1], self.enemy_snake.locations, self.snake.locations[0])
 
-        if self.target.pos == self.snake.locations[0]:
+
+        if self.target.pos == self.snake.locations[0] or self.target.pos == self.enemy_snake.locations[0]:
             self.target.pos = [0, 0]
-            self.snake.move_counter = 10
+            self.enemy_snake.move_counter = 10
+            # self.snake.move_counter = 10
 
         if self.snake.hit_self() or self.snake.hit_bounds(self.boundary_limit):
             self.framework.stop_game() # game over
             print(self.snake.locations)       
             print("game over")
+
+    def min_dist(self, target_row, target_col, enemy_locations, snake_locations):
+        # self.target_row = target_row
+        # self.target_col = target_col
+        # self.enemy_locations = enemy_locations
+        # self.snake_locations = snake_locations
+
+        # self.enemy_snake.locations[0] = [self.enemy_snake.locations[0][0] + self.snake_size, self.enemy_snake.locations[0][1]]        
+
+        # print(enemy_locations[0][1])
+
+        loc = [
+            [enemy_locations[0][0] + self.snake_size, enemy_locations[0][1]],
+            [enemy_locations[0][0] - self.snake_size, enemy_locations[0][1]],
+            [enemy_locations[0][0], enemy_locations[0][1] + self.snake_size],
+            [enemy_locations[0][0], enemy_locations[0][1] - self.snake_size]
+        ]
+
+        # # print(loc)
+
+        # dist = [
+        #     math.sqrt((target_row - enemy_locations[0][0] + self.snake_size) ** 2 + (target_col - enemy_locations[0][1]) ** 2),
+        #     math.sqrt((target_row - enemy_locations[0][0] - self.snake_size) ** 2 + (target_col - enemy_locations[0][1]) ** 2),
+        #     math.sqrt((target_row - enemy_locations[0][0]) ** 2 + (target_col - enemy_locations[0][1] + self.snake_size) ** 2),
+        #     math.sqrt((target_row - enemy_locations[0][0]) ** 2 + (target_col - enemy_locations[0][1] - self.snake_size) ** 2)
+        # ]
+        # # print(dist.sort())
+
+        # for i in range(3):
+        #     for j in range(3):
+        #         if dist[i] > dist[j + 1]:
+        #             temp = loc[i]
+        #             loc[i] = loc[j + 1]
+        #             loc[j] = temp
+        #             temp1 = dist[i]
+        #             dist[i] = dist[j + 1]
+        #             dist[j] = temp1
+                    # temp1 = loc[i]
+                    # temp2 = dist[i]
+                    # dist[j] = dist[i]
+                    # dist[i] = temp2
+                    # loc[j] = loc[i]
+                    # loc[i] = temp1
+
+        # print(loc)
+
+        # print(dist)
+        # print("\n\n")
+
+        # if not [enemy_locations[0][0] + self.snake_size, enemy_locations[0][1]] in enemy_locations:
+        #     # dist.append( math.sqrt((target_row - enemy_locations[0][0] + self.snake_size) ** 2 + (target_col - enemy_locations[0][1]) ** 2))
+        #     ls.append(1)
+        # if not [enemy_locations[0][0] - self.snake_size, enemy_locations[0][1]] in enemy_locations:
+        #     # dist.append(math.sqrt((target_row - enemy_locations[0][0] - self.snake_size) ** 2 + (target_col - enemy_locations[0][1]) ** 2))
+        #     ls.append(2)
+        # if not [enemy_locations[0][0], enemy_locations[0][1] + self.snake_size] in enemy_locations:
+        #     # dist.append(math.sqrt((target_row - enemy_locations[0][0]) ** 2 + (target_col - enemy_locations[0][1] + self.snake_size) ** 2))
+        #     ls.append(3)
+        # if not [enemy_locations[0][0], enemy_locations[0][1] - self.snake_size] in enemy_locations:
+        #     # dist.append(math.sqrt((target_row - enemy_locations[0][0]) ** 2 + (target_col - enemy_locations[0][1] - self.snake_size) ** 2))
+        #     ls.append(4)
+        
+        # maxIndex = dist.index(max(dist))
+
+        # if maxIndex:
+        #     pass
+
+        dist = [0,0,0,0]
+
+
+        dist[0] = math.sqrt((target_row - enemy_locations[0][0] + self.snake_size) ** 2 + (target_col - enemy_locations[0][1]) ** 2)
+        dist[1] = math.sqrt((target_row - enemy_locations[0][0] - self.snake_size) ** 2 + (target_col - enemy_locations[0][1]) ** 2)
+        dist[2] = math.sqrt((target_row - enemy_locations[0][0]) ** 2 + (target_col - enemy_locations[0][1] + self.snake_size) ** 2)
+        dist[3] = math.sqrt((target_row - enemy_locations[0][0]) ** 2 + (target_col - enemy_locations[0][1] - self.snake_size) ** 2)
+        
+        minIndex = dist.index(max(dist))
+
+        # dist.sort()
+        # dist.reverse()
+
+
+        # for i in range(4):
+            # if not loc[i] in enemy_locations:
+                # enemy_locations[0] = loc[0]
+        #         return
+
+        while True:
+            for i in range(len(dist)):
+                if i == minIndex:
+                    if not loc[i] in enemy_locations:
+                        enemy_locations[0] = loc[i]
+                        return
+                        # dist = [0,0,0,0]
+                    else:
+                        dist.pop(i)
+                        loc.pop(i)
+                        # print(dist)
+                        if len(dist) == 0:
+                            self.framework.stop_game()
+                            return
+                        minIndex = dist.index(max(dist))
+                    break
+
+
+        # if minIndex == 0:
+        #     if not [enemy_locations[0][0] + self.snake_size, enemy_locations[0][1]] in enemy_locations:
+        #         enemy_locations[0] = [enemy_locations[0][0] + self.snake_size, enemy_locations[0][1]]
+        # if minIndex == 1:
+        #     # if not [enemy_locations[0][0] - self.snake_size, enemy_locations[0][1]] in enemy_locations:
+        #         enemy_locations[0] = [enemy_locations[0][0] - self.snake_size, enemy_locations[0][1]]
+        # if minIndex == 2:
+        #     # if not [enemy_locations[0][0], enemy_locations[0][1] + self.snake_size] in enemy_locations:
+        #         enemy_locations[0] = [enemy_locations[0][0], enemy_locations[0][1] + self.snake_size]            
+        # if minIndex == 3:
+        #     # if not [enemy_locations[0][0], enemy_locations[0][1] - self.snake_size] in enemy_locations:
+        #         enemy_locations[0] = [enemy_locations[0][0], enemy_locations[0][1] - self.snake_size]
+            
+
 
     def start(self):
         # starts the game
